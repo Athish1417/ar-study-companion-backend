@@ -1,0 +1,15 @@
+[35mmain.py[m[36m:[m[32m13[m[36m:[mprint("[1;31mGEMINI[m KEY:", os.getenv("[1;31mGEMINI[m_API_KEY"))
+[35mservices/ai_tutor_service.py[m[36m:[m[32m9[m[36m:[m[1;31mGEMINI[m_API_KEY = os.getenv("[1;31mGEMINI[m_API_KEY")
+[35mservices/ai_tutor_service.py[m[36m:[m[32m13[m[36m:[m    if not [1;31mGEMINI[m_API_KEY:
+[35mservices/ai_tutor_service.py[m[36m:[m[32m21[m[36m:[m        f"gemini-2.5-flash:generateContent?key={[1;31mGEMINI[m_API_KEY}"
+[35mservices/gemini_service.py[m[36m:[m[32m8[m[36m:[m[1;31mGEMINI[m_API_KEY = os.getenv("[1;31mGEMINI[m_API_KEY")
+[35mservices/gemini_service.py[m[36m:[m[32m11[m[36m:[m    if not [1;31mGEMINI[m_API_KEY:
+[35mservices/gemini_service.py[m[36m:[m[32m22[m[36m:[m         f"gemini-2.5-flash:generateContent?key={[1;31mGEMINI[m_API_KEY}"
+[35mservices/gemini_service.py[m[36m:[m[32m56[m[36m:[m        print("[1;31mGEMINI[m STATUS:", response.status_code)
+[35mservices/gemini_service.py[m[36m:[m[32m57[m[36m:[m        print("[1;31mGEMINI[m RESPONSE:", data)
+[35mservices/gemini_service.py[m[36m:[m[32m91[m[36m:[m        print("[1;31mGEMINI[m EXCEPTION:", str(e))
+[35mservices/quiz_generator.py[m[36m:[m[32m10[m[36m:[m[1;31mGEMINI[m_API_KEY = os.getenv("[1;31mGEMINI[m_API_KEY")
+[35mservices/quiz_generator.py[m[36m:[m[32m72[m[36m:[m    if not [1;31mGEMINI[m_API_KEY:
+[35mservices/quiz_generator.py[m[36m:[m[32m77[m[36m:[m        f"gemini-2.5-flash:generateContent?key={[1;31mGEMINI[m_API_KEY}"
+[35mservices/quiz_generator.py[m[36m:[m[32m114[m[36m:[m        print("QUIZ [1;31mGEMINI[m STATUS:", response.status_code)
+[35mservices/quiz_generator.py[m[36m:[m[32m115[m[36m:[m        print("QUIZ [1;31mGEMINI[m RESPONSE:", data)
