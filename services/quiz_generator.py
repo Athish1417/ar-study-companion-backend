@@ -71,10 +71,13 @@ def fallback_quiz(topic: str):
 
 def _extract_difficulty(summary: str) -> str:
     text = summary.lower()
-    if "hard" in text or "difficult" in text or "advanced" in text:
+
+    if "difficulty: hard" in text:
         return "Hard"
-    if "easy" in text or "basic" in text:
+    if "difficulty: easy" in text:
         return "Easy"
+    if "difficulty: medium" in text:
+        return "Medium"
     return "Medium"
 
 
@@ -101,7 +104,17 @@ def generate_quiz_with_gemini(topic: str, summary: str):
     prompt = f"""
 You are an academic quiz generator.
 
-Create exactly {question_count} multiple choice questions.
+Create exactly {question_count} NEW and UNIQUE multiple choice questions.
+
+The quiz must strongly follow this difficulty: {difficulty}
+
+If Easy: use simple definition-based beginner questions.
+If Medium: use application-based questions with moderate thinking.
+If Hard: use advanced reasoning and tricky conceptual questions.
+
+Do NOT generate the same questions for Easy, Medium, and Hard.
+Do NOT reuse common generic questions.
+Each question must be specific to the topic: {topic}.
 
 Topic: {topic}
 Context / Summary: {summary}
