@@ -4,6 +4,7 @@ import re
 import requests
 from pathlib import Path
 from dotenv import load_dotenv
+from datetime import datetime
 
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
@@ -15,57 +16,17 @@ def fallback_quiz(topic: str):
     return {
         "quiz": [
             {
-                "question": f"What is the main idea of {topic}?",
+                "question": f"What is the basic meaning of {topic}?",
                 "options": [
-                    "To understand the basic concept",
-                    "To delete data",
-                    "To damage software",
-                    "To avoid learning",
+                    "A study-related concept",
+                    "A movie name",
+                    "A song type",
+                    "A game cheat"
                 ],
-                "answer": "To understand the basic concept",
-            },
-            {
-                "question": f"Why is {topic} important for students?",
-                "options": [
-                    "It helps in understanding the subject better",
-                    "It is unrelated to studies",
-                    "It only works for games",
-                    "It has no use",
-                ],
-                "answer": "It helps in understanding the subject better",
-            },
-            {
-                "question": f"Which method is useful for learning {topic}?",
-                "options": [
-                    "Reading notes and practicing questions",
-                    "Ignoring the topic",
-                    "Skipping revision",
-                    "Guessing randomly",
-                ],
-                "answer": "Reading notes and practicing questions",
-            },
-            {
-                "question": f"What should a student do after learning {topic}?",
-                "options": [
-                    "Revise and take a quiz",
-                    "Forget the topic",
-                    "Close the app",
-                    "Avoid practice",
-                ],
-                "answer": "Revise and take a quiz",
-            },
-            {
-                "question": f"What does this app help with in {topic}?",
-                "options": [
-                    "Explanation, revision, and quiz practice",
-                    "Only entertainment",
-                    "Deleting textbook content",
-                    "Blocking learning",
-                ],
-                "answer": "Explanation, revision, and quiz practice",
-            },
+                "answer": "A study-related concept"
+            }
         ],
-        "source": "fallback",
+        "source": "fallback"
     }
 
 
@@ -78,14 +39,19 @@ def _extract_difficulty(summary: str) -> str:
         return "Easy"
     if "difficulty: medium" in text:
         return "Medium"
+
+    if "hard" in text:
+        return "Hard"
+    if "easy" in text:
+        return "Easy"
+
     return "Medium"
 
 
 def _extract_question_count(summary: str) -> int:
-    match = re.search(r"(\d+)\s*(study-related\s*)?questions?", summary.lower())
+    match = re.search(r"number of questions:\s*(\d+)", summary.lower())
     if match:
-        count = int(match.group(1))
-        return max(5, min(count, 30))
+        return max(5, min(int(match.group(1)), 30))
     return 5
 
 
@@ -95,6 +61,35 @@ def generate_quiz_with_gemini(topic: str, summary: str):
 
     difficulty = _extract_difficulty(summary)
     question_count = _extract_question_count(summary)
+    unique_id = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    if difficulty == "Easy":
+        difficulty_instruction = """
+Create EASY questions:
+- Basic definitions
+- Simple facts
+- Beginner-level wording
+- Direct answers
+- No tricky options
+"""
+    elif difficulty == "Medium":
+        difficulty_instruction = """
+Create MEDIUM questions:
+- Application-based questions
+- Example-based questions
+- Moderate thinking
+- Options should be slightly similar
+- Avoid very basic definition-only questions
+"""
+    else:
+        difficulty_instruction = """
+Create HARD questions:
+- Advanced reasoning questions
+- Tricky conceptual options
+- Deeper understanding
+- Scenario-based questions
+- Avoid simple definition questions
+"""
 
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
@@ -104,51 +99,27 @@ def generate_quiz_with_gemini(topic: str, summary: str):
     prompt = f"""
 You are an academic quiz generator.
 
-Create exactly {question_count} NEW and UNIQUE multiple choice questions.
+Generate a completely NEW quiz.
 
-The quiz must strongly follow this difficulty: {difficulty}
-
-If Easy: use simple definition-based beginner questions.
-If Medium: use application-based questions with moderate thinking.
-If Hard: use advanced reasoning and tricky conceptual questions.
-
-Do NOT generate the same questions for Easy, Medium, and Hard.
-Do NOT reuse common generic questions.
-Each question must be specific to the topic: {topic}.
-
+Unique Quiz ID: {unique_id}
 Topic: {topic}
-Context / Summary: {summary}
 Difficulty: {difficulty}
+Number of Questions: {question_count}
 
-STRICT STUDY RULE:
-Only generate educational, academic, school, college, exam, programming, science, math, history, geography, English grammar, or study-related questions.
-If the topic is not educational, return:
-{{"quiz":[]}}
+Context:
+{summary}
 
-DIFFICULTY RULES:
-Easy:
-- Ask direct, basic, definition-based questions.
-- Use simple wording.
-- Options should be clearly different.
-- Suitable for beginners.
+{difficulty_instruction}
 
-Medium:
-- Ask application-based questions.
-- Include moderate thinking.
-- Mix definitions, examples, and use-cases.
-- Options should need careful reading.
+STRICT RULES:
+- Generate exactly {question_count} questions.
+- Questions must be study-related only.
+- Questions must match ONLY the {difficulty} difficulty level.
+- Do NOT generate the same questions for Easy, Medium, and Hard.
+- Do NOT use generic repeated questions like "What is the main idea?"
+- Every question must be specific to the topic: {topic}.
 
-Hard:
-- Ask deeper conceptual and reasoning questions.
-- Include tricky but fair options.
-- Avoid obvious answers.
-- Suitable for advanced revision.
-
-IMPORTANT:
-Generate questions ONLY at this difficulty level: {difficulty}.
-Do not reuse the same question style across different difficulty levels.
-
-Return ONLY valid JSON. Do not use markdown.
+Return ONLY valid JSON. No markdown.
 
 Format:
 {{
@@ -169,7 +140,12 @@ Format:
                     {"text": prompt}
                 ]
             }
-        ]
+        ],
+        "generationConfig": {
+            "temperature": 0.9,
+            "topP": 0.95,
+            "topK": 40
+        }
     }
 
     try:
@@ -177,12 +153,10 @@ Format:
         data = response.json()
 
         print("QUIZ GEMINI STATUS:", response.status_code)
-        print("QUIZ GEMINI RESPONSE:", data)
+        print("DIFFICULTY:", difficulty)
+        print("QUESTION COUNT:", question_count)
 
-        if "error" in data:
-            return fallback_quiz(topic)
-
-        if "candidates" not in data:
+        if "error" in data or "candidates" not in data:
             return fallback_quiz(topic)
 
         text = data["candidates"][0]["content"]["parts"][0]["text"]
@@ -195,7 +169,6 @@ Format:
 
         result["source"] = "gemini"
         result["difficulty"] = difficulty
-        result["question_count"] = question_count
         return result
 
     except Exception as e:
