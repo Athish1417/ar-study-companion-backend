@@ -13,7 +13,7 @@ def ask_ai_tutor(question: str, language: str):
     if not GEMINI_API_KEY:
         return {
             "answer": "Gemini API key is missing.",
-            "source": "error"
+            "source": "error",
         }
 
     url = (
@@ -47,24 +47,33 @@ Question:
         response = requests.post(url, json=payload, timeout=30)
         data = response.json()
 
-        print("AI TUTOR STATUS:", response.status_code)
-        print("AI TUTOR RESPONSE:", data)
-
         if "error" in data:
+            error_message = data["error"].get("message", "Gemini error")
+
+            if (
+                "high demand" in error_message.lower()
+                or "overloaded" in error_message.lower()
+                or "quota" in error_message.lower()
+            ):
+                return {
+                    "answer": "AI Tutor is busy right now due to high demand. Please try again in a few seconds.",
+                    "source": "gemini-busy",
+                }
+
             return {
-                "answer": data["error"].get("message", "Gemini error"),
-                "source": "gemini-error"
+                "answer": error_message,
+                "source": "gemini-error",
             }
 
         answer = data["candidates"][0]["content"]["parts"][0]["text"]
 
         return {
             "answer": answer,
-            "source": "gemini"
+            "source": "gemini",
         }
 
     except Exception as e:
         return {
-            "answer": str(e),
-            "source": "error"
+            "answer": f"AI Tutor connection error: {str(e)}",
+            "source": "error",
         }
