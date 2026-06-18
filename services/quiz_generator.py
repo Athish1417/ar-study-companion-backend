@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import requests
 from pathlib import Path
 from dotenv import load_dotenv
@@ -19,9 +20,9 @@ def fallback_quiz(topic: str):
                     "To understand the basic concept",
                     "To delete data",
                     "To damage software",
-                    "To avoid learning"
+                    "To avoid learning",
                 ],
-                "answer": "To understand the basic concept"
+                "answer": "To understand the basic concept",
             },
             {
                 "question": f"Why is {topic} important for students?",
@@ -29,9 +30,9 @@ def fallback_quiz(topic: str):
                     "It helps in understanding the subject better",
                     "It is unrelated to studies",
                     "It only works for games",
-                    "It has no use"
+                    "It has no use",
                 ],
-                "answer": "It helps in understanding the subject better"
+                "answer": "It helps in understanding the subject better",
             },
             {
                 "question": f"Which method is useful for learning {topic}?",
@@ -39,9 +40,9 @@ def fallback_quiz(topic: str):
                     "Reading notes and practicing questions",
                     "Ignoring the topic",
                     "Skipping revision",
-                    "Guessing randomly"
+                    "Guessing randomly",
                 ],
-                "answer": "Reading notes and practicing questions"
+                "answer": "Reading notes and practicing questions",
             },
             {
                 "question": f"What should a student do after learning {topic}?",
@@ -49,9 +50,9 @@ def fallback_quiz(topic: str):
                     "Revise and take a quiz",
                     "Forget the topic",
                     "Close the app",
-                    "Avoid practice"
+                    "Avoid practice",
                 ],
-                "answer": "Revise and take a quiz"
+                "answer": "Revise and take a quiz",
             },
             {
                 "question": f"What does this app help with in {topic}?",
@@ -59,18 +60,38 @@ def fallback_quiz(topic: str):
                     "Explanation, revision, and quiz practice",
                     "Only entertainment",
                     "Deleting textbook content",
-                    "Blocking learning"
+                    "Blocking learning",
                 ],
-                "answer": "Explanation, revision, and quiz practice"
-            }
+                "answer": "Explanation, revision, and quiz practice",
+            },
         ],
-        "source": "fallback"
+        "source": "fallback",
     }
+
+
+def _extract_difficulty(summary: str) -> str:
+    text = summary.lower()
+    if "hard" in text or "difficult" in text or "advanced" in text:
+        return "Hard"
+    if "easy" in text or "basic" in text:
+        return "Easy"
+    return "Medium"
+
+
+def _extract_question_count(summary: str) -> int:
+    match = re.search(r"(\d+)\s*(study-related\s*)?questions?", summary.lower())
+    if match:
+        count = int(match.group(1))
+        return max(5, min(count, 30))
+    return 5
 
 
 def generate_quiz_with_gemini(topic: str, summary: str):
     if not GEMINI_API_KEY:
         return fallback_quiz(topic)
+
+    difficulty = _extract_difficulty(summary)
+    question_count = _extract_question_count(summary)
 
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
@@ -78,10 +99,41 @@ def generate_quiz_with_gemini(topic: str, summary: str):
     )
 
     prompt = f"""
-Create 5 multiple choice questions for this topic.
+You are an academic quiz generator.
+
+Create exactly {question_count} multiple choice questions.
 
 Topic: {topic}
-Summary: {summary}
+Context / Summary: {summary}
+Difficulty: {difficulty}
+
+STRICT STUDY RULE:
+Only generate educational, academic, school, college, exam, programming, science, math, history, geography, English grammar, or study-related questions.
+If the topic is not educational, return:
+{{"quiz":[]}}
+
+DIFFICULTY RULES:
+Easy:
+- Ask direct, basic, definition-based questions.
+- Use simple wording.
+- Options should be clearly different.
+- Suitable for beginners.
+
+Medium:
+- Ask application-based questions.
+- Include moderate thinking.
+- Mix definitions, examples, and use-cases.
+- Options should need careful reading.
+
+Hard:
+- Ask deeper conceptual and reasoning questions.
+- Include tricky but fair options.
+- Avoid obvious answers.
+- Suitable for advanced revision.
+
+IMPORTANT:
+Generate questions ONLY at this difficulty level: {difficulty}.
+Do not reuse the same question style across different difficulty levels.
 
 Return ONLY valid JSON. Do not use markdown.
 
@@ -129,6 +181,8 @@ Format:
             return fallback_quiz(topic)
 
         result["source"] = "gemini"
+        result["difficulty"] = difficulty
+        result["question_count"] = question_count
         return result
 
     except Exception as e:
