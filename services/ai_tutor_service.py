@@ -21,7 +21,7 @@ def ask_ai_tutor(question: str, language: str):
         f"gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
     )
 
-   prompt = f"""
+    prompt = f"""
 You are an AI study tutor for students.
 
 STRICT RULE:
