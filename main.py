@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 import os
@@ -8,16 +9,28 @@ from dotenv import load_dotenv
 env_path = Path(__file__).resolve().parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
-print("===================================")
-print("ENV PATH:", env_path)
-print("===================================")
-
 from services.gemini_service import ask_gemini_for_topic
 from services.quiz_generator import generate_quiz_with_gemini
-from database.db import create_tables, save_scan, get_scan_history, save_quiz_score, get_quiz_history, get_analytics
+from database.db import (
+    create_tables,
+    save_scan,
+    get_scan_history,
+    save_quiz_score,
+    get_quiz_history,
+    get_analytics,
+)
 from services.ai_tutor_service import ask_ai_tutor
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 create_tables()
 
 
@@ -28,7 +41,8 @@ class OCRRequest(BaseModel):
 class QuizRequest(BaseModel):
     topic: str
     summary: str
-    
+
+
 class SaveScanRequest(BaseModel):
     user_id: str
     subject: str
@@ -44,9 +58,11 @@ class SaveQuizScoreRequest(BaseModel):
     score: int
     total_questions: int
 
+
 class AITutorRequest(BaseModel):
     question: str
     language: str
+
 
 @app.get("/")
 def home():
@@ -55,17 +71,15 @@ def home():
 
 @app.post("/detect-topic")
 def detect_topic(request: OCRRequest):
-    gemini_result = ask_gemini_for_topic(request.ocr_text)
-    return gemini_result
+    return ask_gemini_for_topic(request.ocr_text)
 
 
 @app.post("/generate-quiz")
 def generate_quiz(request: QuizRequest):
-    quiz_result = generate_quiz_with_gemini(
+    return generate_quiz_with_gemini(
         request.topic,
-        request.summary
+        request.summary,
     )
-    return quiz_result
 
 
 @app.post("/save-scan")
@@ -101,13 +115,15 @@ def save_quiz_score_api(request: SaveQuizScoreRequest):
 def quiz_history_api(user_id: str):
     return {"history": get_quiz_history(user_id)}
 
+
 @app.get("/analytics/{user_id}")
 def analytics_api(user_id: str):
     return get_analytics(user_id)
+
 
 @app.post("/ask-ai")
 def ask_ai(request: AITutorRequest):
     return ask_ai_tutor(
         request.question,
-        request.language
+        request.language,
     )
