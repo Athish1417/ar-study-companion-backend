@@ -19,7 +19,10 @@ from database.db import (
     get_quiz_history,
     get_analytics,
 )
-from services.ai_tutor_service import ask_ai_tutor
+from services.ai_tutor_service import (
+    ask_ai_tutor,
+    ask_ai_tutor_with_image,
+)
 
 app = FastAPI()
 
@@ -62,6 +65,13 @@ class SaveQuizScoreRequest(BaseModel):
 class AITutorRequest(BaseModel):
     question: str
     language: str
+
+
+class AIImageRequest(BaseModel):
+    question: str
+    language: str
+    image_base64: str
+    mime_type: str = "image/jpeg"
 
 
 @app.get("/")
@@ -126,4 +136,14 @@ def ask_ai(request: AITutorRequest):
     return ask_ai_tutor(
         request.question,
         request.language,
+    )
+
+
+@app.post("/ask-ai-image")
+def ask_ai_image(request: AIImageRequest):
+    return ask_ai_tutor_with_image(
+        request.question,
+        request.language,
+        request.image_base64,
+        request.mime_type,
     )
