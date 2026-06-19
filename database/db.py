@@ -1,4 +1,5 @@
 import sqlite3
+import json
 from pathlib import Path
 
 DB_PATH = Path(__file__).resolve().parent.parent / "ar_study_companion.db"
@@ -38,7 +39,17 @@ def create_tables():
         )
     """)
 
-    # Add user_id column if tables already existed before
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS flashcard_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            summary TEXT NOT NULL,
+            flashcards TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     try:
         cursor.execute("ALTER TABLE scan_history ADD COLUMN user_id TEXT DEFAULT 'old_user'")
     except sqlite3.OperationalError:
@@ -113,6 +124,63 @@ def get_quiz_history(user_id):
     return [dict(row) for row in rows]
 
 
+def save_flashcards(user_id, topic, summary, flashcards):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO flashcard_history
+        (user_id, topic, summary, flashcards)
+        VALUES (?, ?, ?, ?)
+    """, (
+        user_id,
+        topic,
+        summary,
+        json.dumps(flashcards),
+    ))
+
+    conn.commit()
+    conn.close()
+
+
+def get_flashcard_history(user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, user_id, topic, summary, created_at
+        FROM flashcard_history
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+    """, (user_id,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [dict(row) for row in rows]
+
+
+def get_flashcards_by_id(user_id, flashcard_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT *
+        FROM flashcard_history
+        WHERE user_id = ? AND id = ?
+    """, (user_id, flashcard_id))
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    data = dict(row)
+    data["flashcards"] = json.loads(data["flashcards"])
+    return data
+
+
 def get_analytics(user_id):
     conn = get_connection()
     cursor = conn.cursor()
@@ -130,6 +198,13 @@ def get_analytics(user_id):
         WHERE user_id = ?
     """, (user_id,))
     total_quizzes = cursor.fetchone()["total_quizzes"]
+
+    cursor.execute("""
+        SELECT COUNT(*) as total_flashcards
+        FROM flashcard_history
+        WHERE user_id = ?
+    """, (user_id,))
+    total_flashcards = cursor.fetchone()["total_flashcards"]
 
     cursor.execute("""
         SELECT AVG(score * 100.0 / total_questions) as average_score
@@ -152,6 +227,7 @@ def get_analytics(user_id):
     return {
         "total_scans": total_scans,
         "total_quizzes": total_quizzes,
+        "total_flashcards": total_flashcards,
         "average_score": round(average_score, 2),
         "best_score": best_score,
     }

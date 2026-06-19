@@ -19,6 +19,9 @@ from database.db import (
     save_quiz_score,
     get_quiz_history,
     get_analytics,
+    save_flashcards,
+    get_flashcard_history,
+    get_flashcards_by_id,
 )
 from services.ai_tutor_service import (
     ask_ai_tutor,
@@ -77,6 +80,16 @@ class AIImageRequest(BaseModel):
     language: str
     image_base64: str
     mime_type: str = "image/jpeg"
+    
+class SaveFlashcardsRequest(BaseModel):
+    user_id: str
+    topic: str
+    summary: str
+    flashcards: list
+
+
+class FlashcardHistoryRequest(BaseModel):
+    user_id: str
 
 
 @app.get("/")
@@ -158,4 +171,35 @@ def generate_flashcards_api(request: FlashcardRequest):
     return generate_flashcards(
         request.topic,
         request.summary,
+    )
+    
+@app.post("/save-flashcards")
+def save_flashcards_api(request: SaveFlashcardsRequest):
+    save_flashcards(
+        request.user_id,
+        request.topic,
+        request.summary,
+        request.flashcards,
+    )
+
+    return {
+        "message": "Flashcards saved successfully"
+    }
+
+
+@app.get("/flashcard-history/{user_id}")
+def flashcard_history_api(user_id: str):
+    return {
+        "history": get_flashcard_history(user_id)
+    }
+
+
+@app.get("/flashcards/{user_id}/{flashcard_id}")
+def flashcards_by_id_api(
+    user_id: str,
+    flashcard_id: int,
+):
+    return get_flashcards_by_id(
+        user_id,
+        flashcard_id,
     )
