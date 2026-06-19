@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from services.flashcard_generator import generate_flashcards
 
 env_path = Path(__file__).resolve().parent / ".env"
 load_dotenv(dotenv_path=env_path)
@@ -40,6 +41,10 @@ create_tables()
 class OCRRequest(BaseModel):
     ocr_text: str
 
+
+class FlashcardRequest(BaseModel):
+    topic: str
+    summary: str
 
 class QuizRequest(BaseModel):
     topic: str
@@ -146,4 +151,11 @@ def ask_ai_image(request: AIImageRequest):
         request.language,
         request.image_base64,
         request.mime_type,
+    )
+    
+@app.post("/generate-flashcards")
+def generate_flashcards_api(request: FlashcardRequest):
+    return generate_flashcards(
+        request.topic,
+        request.summary,
     )
