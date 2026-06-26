@@ -60,6 +60,42 @@ def create_tables():
     except sqlite3.OperationalError:
         pass
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS community_posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL,
+        username TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+""")
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS community_replies (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        post_id INTEGER NOT NULL,
+        user_id TEXT NOT NULL,
+        username TEXT NOT NULL,
+        reply TEXT NOT NULL,
+        likes INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(post_id) REFERENCES community_posts(id)
+    )
+""")
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS community_reports (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        post_id INTEGER,
+        reply_id INTEGER,
+        reported_by TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+""")
+
     conn.commit()
     conn.close()
 
@@ -231,3 +267,89 @@ def get_analytics(user_id):
         "average_score": round(average_score, 2),
         "best_score": best_score,
     }
+    
+def create_community_post(user_id, username, subject, title, description):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO community_posts
+        (user_id, username, subject, title, description)
+        VALUES (?, ?, ?, ?, ?)
+    """, (user_id, username, subject, title, description))
+
+    conn.commit()
+    conn.close()
+
+
+def get_community_posts():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT * FROM community_posts
+        ORDER BY created_at DESC
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [dict(row) for row in rows]
+
+
+def create_community_reply(post_id, user_id, username, reply):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO community_replies
+        (post_id, user_id, username, reply)
+        VALUES (?, ?, ?, ?)
+    """, (post_id, user_id, username, reply))
+
+    conn.commit()
+    conn.close()
+
+
+def get_community_replies(post_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT * FROM community_replies
+        WHERE post_id = ?
+        ORDER BY created_at ASC
+    """, (post_id,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [dict(row) for row in rows]
+
+
+def report_community_post(post_id, reported_by, reason):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO community_reports
+        (post_id, reported_by, reason)
+        VALUES (?, ?, ?)
+    """, (post_id, reported_by, reason))
+
+    conn.commit()
+    conn.close()
+
+
+def report_community_reply(reply_id, reported_by, reason):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO community_reports
+        (reply_id, reported_by, reason)
+        VALUES (?, ?, ?)
+    """, (reply_id, reported_by, reason))
+
+    conn.commit()
+    conn.close()

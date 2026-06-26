@@ -9,26 +9,25 @@ load_dotenv(dotenv_path=env_path)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 
+def _is_greeting(question: str):
+    text = question.lower().strip()
+    greetings = [
+        "hi", "hello", "hey", "hii", "hiii",
+        "good morning", "good afternoon", "good evening",
+        "namaste"
+    ]
+    return text in greetings
+
+
 def _study_prompt(language: str, question: str):
     return f"""
-You are an AI study tutor for students.
+You are an AI Study Tutor inside an AR Study Companion app.
 
-STRICT RULE:
-Only answer study-related and academic questions.
-
-Allowed:
-- School/college subjects
-- Science, Maths, History, Geography
-- Computer Science, Programming
-- English grammar
-- Exams, notes, quizzes
-- Academic explanations
-- Textbook pages, diagrams, notes, homework questions
-
-Not allowed:
-- Movies, songs, celebrities
-- Entertainment, dating, jokes
-- Non-study topics
+STRICT RULES:
+1. You may reply normally to greetings.
+2. You must answer only study-related and academic questions.
+3. Study-related means school subjects, college subjects, graduation topics, programming, exams, projects, assignments, research, career learning, and academic concepts.
+4. Do not answer movies, songs, celebrities, entertainment, dating, jokes, gaming, gossip, sports, or random personal topics.
 
 If the input is not study-related, reply only:
 "I can only help with study-related topics. Please ask a subject, chapter, concept, or academic doubt."
@@ -74,6 +73,12 @@ def _handle_gemini_response(data):
 
 
 def ask_ai_tutor(question: str, language: str):
+    if _is_greeting(question):
+        return {
+            "answer": "Hello! I am your AI Study Tutor. Ask me any study-related question.",
+            "source": "greeting",
+        }
+
     if not GEMINI_API_KEY:
         return {
             "answer": "Gemini API key is missing.",

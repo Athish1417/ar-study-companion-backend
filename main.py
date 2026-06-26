@@ -22,6 +22,13 @@ from database.db import (
     save_flashcards,
     get_flashcard_history,
     get_flashcards_by_id,
+
+    create_community_post,
+    get_community_posts,
+    create_community_reply,
+    get_community_replies,
+    report_community_post,
+    report_community_reply,
 )
 from services.ai_tutor_service import (
     ask_ai_tutor,
@@ -87,6 +94,24 @@ class SaveFlashcardsRequest(BaseModel):
     summary: str
     flashcards: list
 
+class CommunityPostRequest(BaseModel):
+    user_id: str
+    username: str
+    subject: str
+    title: str
+    description: str
+
+
+class CommunityReplyRequest(BaseModel):
+    post_id: int
+    user_id: str
+    username: str
+    reply: str
+
+
+class CommunityReportRequest(BaseModel):
+    reported_by: str
+    reason: str
 
 class FlashcardHistoryRequest(BaseModel):
     user_id: str
@@ -151,6 +176,8 @@ def analytics_api(user_id: str):
 
 @app.post("/ask-ai")
 def ask_ai(request: AITutorRequest):
+    print("MAIN ROUTE HIT:", request.question)
+
     return ask_ai_tutor(
         request.question,
         request.language,
@@ -203,3 +230,77 @@ def flashcards_by_id_api(
         user_id,
         flashcard_id,
     )
+    
+@app.post("/community/posts")
+def create_post(request: CommunityPostRequest):
+    create_community_post(
+        request.user_id,
+        request.username,
+        request.subject,
+        request.title,
+        request.description,
+    )
+
+    return {
+        "message": "Post created successfully"
+    }
+
+
+@app.get("/community/posts")
+def get_posts():
+    return {
+        "posts": get_community_posts()
+    }
+
+
+@app.post("/community/replies")
+def create_reply(request: CommunityReplyRequest):
+    create_community_reply(
+        request.post_id,
+        request.user_id,
+        request.username,
+        request.reply,
+    )
+
+    return {
+        "message": "Reply added"
+    }
+
+
+@app.get("/community/replies/{post_id}")
+def get_replies(post_id: int):
+    return {
+        "replies": get_community_replies(post_id)
+    }
+
+
+@app.post("/community/report/post/{post_id}")
+def report_post(
+    post_id: int,
+    request: CommunityReportRequest,
+):
+    report_community_post(
+        post_id,
+        request.reported_by,
+        request.reason,
+    )
+
+    return {
+        "message": "Post reported successfully"
+    }
+
+
+@app.post("/community/report/reply/{reply_id}")
+def report_reply(
+    reply_id: int,
+    request: CommunityReportRequest,
+):
+    report_community_reply(
+        reply_id,
+        request.reported_by,
+        request.reason,
+    )
+
+    return {
+        "message": "Reply reported successfully"
+    }
