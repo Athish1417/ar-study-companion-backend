@@ -96,6 +96,16 @@ def create_tables():
     )
 """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL UNIQUE,
+        username TEXT NOT NULL UNIQUE,
+        email TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+""")
+
     conn.commit()
     conn.close()
 
@@ -353,3 +363,39 @@ def report_community_reply(reply_id, reported_by, reason):
 
     conn.commit()
     conn.close()
+    
+def create_or_update_user(user_id, username, email):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            INSERT INTO users (user_id, username, email)
+            VALUES (?, ?, ?)
+        """, (user_id, username, email))
+        conn.commit()
+        conn.close()
+        return {"success": True, "message": "Username saved successfully"}
+
+    except sqlite3.IntegrityError:
+        conn.close()
+        return {"success": False, "message": "Username already exists. Please choose another."}
+
+
+def get_user_profile(user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT user_id, username, email, created_at
+        FROM users
+        WHERE user_id = ?
+    """, (user_id,))
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    return dict(row)

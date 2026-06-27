@@ -29,6 +29,8 @@ from database.db import (
     get_community_replies,
     report_community_post,
     report_community_reply,
+    create_or_update_user,
+    get_user_profile,
 )
 from services.ai_tutor_service import (
     ask_ai_tutor,
@@ -115,6 +117,11 @@ class CommunityReportRequest(BaseModel):
 
 class FlashcardHistoryRequest(BaseModel):
     user_id: str
+    
+class UserProfileRequest(BaseModel):
+    user_id: str
+    username: str
+    email: str
 
 
 @app.get("/")
@@ -303,4 +310,28 @@ def report_reply(
 
     return {
         "message": "Reply reported successfully"
+    }
+
+@app.post("/set-username")
+def set_username(request: UserProfileRequest):
+    return create_or_update_user(
+        request.user_id,
+        request.username,
+        request.email,
+    )
+
+
+@app.get("/user-profile/{user_id}")
+def user_profile(user_id: str):
+    profile = get_user_profile(user_id)
+
+    if profile is None:
+        return {
+            "exists": False,
+            "profile": None,
+        }
+
+    return {
+        "exists": True,
+        "profile": profile,
     }
