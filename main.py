@@ -133,6 +133,9 @@ class InterviewRequest(BaseModel):
     question_number: int
     answer: str=""
 
+class ResumeATSRequest(BaseModel):
+    job_role: str
+    resume_text: str
 
 @app.get("/")
 def home():
@@ -226,6 +229,55 @@ Rules:
 - Mix HR + Technical.
 - Professional interview style.
 - Do not explain.
+"""
+
+    return ask_ai_tutor(prompt, "English")
+
+@app.post("/ats/analyze")
+def analyze_resume(request: ResumeATSRequest):
+
+    prompt = f"""
+You are an ATS Resume Analyzer.
+
+Job Role:
+{request.job_role}
+
+Resume:
+{request.resume_text}
+
+Analyze the resume professionally.
+
+Return ONLY valid JSON.
+
+Example:
+
+{{
+  "ats_score": 85,
+  "strengths": [
+    "Flutter",
+    "Firebase",
+    "Python"
+  ],
+  "missing_skills": [
+    "Docker",
+    "REST API",
+    "Git"
+  ],
+  "missing_keywords": [
+    "Machine Learning",
+    "CI/CD"
+  ],
+  "formatting_suggestions": [
+    "Add Professional Summary",
+    "Improve Projects Section"
+  ],
+  "final_recommendation":
+  "Good resume but needs Docker and REST API projects."
+}}
+
+Do not return markdown.
+Do not return explanations.
+Only JSON.
 """
 
     return ask_ai_tutor(prompt, "English")
