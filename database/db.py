@@ -49,6 +49,27 @@ def create_tables():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    
+    cursor.execute("""
+CREATE TABLE IF NOT EXISTS ats_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    resume_name TEXT NOT NULL,
+    job_role TEXT NOT NULL,
+    result TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+""")
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS interview_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    role TEXT NOT NULL,
+    feedback TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+""")
 
     try:
         cursor.execute("ALTER TABLE scan_history ADD COLUMN user_id TEXT DEFAULT 'old_user'")
@@ -477,6 +498,66 @@ def update_username(user_id, username):
 
     conn.commit()
     conn.close()
+    
+    def save_ats_history(user_id, resume_name, job_role, result):
+        conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO ats_history
+        (user_id, resume_name, job_role, result)
+        VALUES (?, ?, ?, ?)
+    """, (user_id, resume_name, job_role, result))
+
+    conn.commit()
+    conn.close()
+
+def get_ats_history(user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT *
+        FROM ats_history
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+    """, (user_id,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [dict(row) for row in rows]
+
+
+def save_interview_history(user_id, role, feedback):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO interview_history
+        (user_id, role, feedback)
+        VALUES (?, ?, ?)
+    """, (user_id, role, feedback))
+
+    conn.commit()
+    conn.close()
+
+
+def get_interview_history(user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT *
+        FROM interview_history
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+    """, (user_id,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [dict(row) for row in rows]
 
     return {
         "success": True,

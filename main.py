@@ -23,6 +23,10 @@ from database.db import (
     save_flashcards,
     get_flashcard_history,
     get_flashcards_by_id,
+    save_ats_history,
+get_ats_history,
+save_interview_history,
+get_interview_history,
 
     create_community_post,
     get_community_posts,
@@ -245,6 +249,13 @@ Do not mention study-related restrictions.
 
     data = response.json()
     answer = data["candidates"][0]["content"]["parts"][0]["text"]
+    save_ats_history(
+    "demo_user",
+    "Resume.pdf",
+    request.job_role,
+    answer,
+)
+
 
     return {"answer": answer}
 
@@ -349,6 +360,11 @@ Do not mention study restrictions.
 
     data = response.json()
     answer = data["candidates"][0]["content"]["parts"][0]["text"]
+    save_interview_history(
+    "demo_user",
+    request.role,
+    answer,
+)
 
     return {"answer": answer}
 
@@ -495,3 +511,15 @@ def user_profile(user_id: str):
     }
     
     
+@app.get("/ats/history/{user_id}")
+def ats_history(user_id: str):
+    return {
+        "history": get_ats_history(user_id)
+    }
+
+
+@app.get("/interview/history/{user_id}")
+def interview_history(user_id: str):
+    return {
+        "history": get_interview_history(user_id)
+    }
