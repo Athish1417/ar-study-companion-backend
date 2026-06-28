@@ -31,6 +31,7 @@ from database.db import (
     report_community_reply,
     create_or_update_user,
     get_user_profile,
+    update_username,
 )
 from services.ai_tutor_service import (
     ask_ai_tutor,
@@ -122,6 +123,10 @@ class UserProfileRequest(BaseModel):
     user_id: str
     username: str
     email: str
+
+class UpdateUsernameRequest(BaseModel):
+    user_id: str
+    username: str
 
 
 @app.get("/")
@@ -335,3 +340,10 @@ def user_profile(user_id: str):
         "exists": True,
         "profile": profile,
     }
+    
+    @app.post("/update-username")
+    def update_username_api(request: UpdateUsernameRequest):
+        return update_username(
+        request.user_id,
+        request.username,
+    )

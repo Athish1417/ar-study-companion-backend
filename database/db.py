@@ -399,3 +399,74 @@ def get_user_profile(user_id):
         return None
 
     return dict(row)
+
+def username_exists(username):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id
+        FROM users
+        WHERE LOWER(username) = LOWER(?)
+    """, (username,))
+
+    exists = cursor.fetchone() is not None
+
+    conn.close()
+
+    return exists
+
+
+def update_username(user_id, username):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE users
+        SET username = ?
+        WHERE user_id = ?
+    """, (username, user_id))
+
+    conn.commit()
+    conn.close()
+
+def username_exists_for_other_user(username, user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id
+        FROM users
+        WHERE LOWER(username) = LOWER(?)
+        AND user_id != ?
+    """, (username, user_id))
+
+    exists = cursor.fetchone() is not None
+
+    conn.close()
+    return exists
+
+
+def update_username(user_id, username):
+    if username_exists_for_other_user(username, user_id):
+        return {
+            "success": False,
+            "message": "Username already exists. Please choose another."
+        }
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE users
+        SET username = ?
+        WHERE user_id = ?
+    """, (username, user_id))
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "success": True,
+        "message": "Username updated successfully"
+    }
