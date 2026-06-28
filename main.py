@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 import os
+import requests
 from pathlib import Path
 from dotenv import load_dotenv
 from services.flashcard_generator import generate_flashcards
@@ -235,6 +236,7 @@ Rules:
 
 @app.post("/ats/analyze")
 def analyze_resume(request: ResumeATSRequest):
+    api_key = os.getenv("GEMINI_API_KEY")
 
     prompt = f"""
 You are an ATS Resume Analyzer.
@@ -245,42 +247,49 @@ Job Role:
 Resume:
 {request.resume_text}
 
-Analyze the resume professionally.
+Analyze this resume for the selected job role.
 
-Return ONLY valid JSON.
+Give:
+ATS Score out of 100
+Strengths
+Missing Skills
+Missing Keywords
+Formatting Suggestions
+Project Suggestions
+Final Recommendation
 
-Example:
-
-{{
-  "ats_score": 85,
-  "strengths": [
-    "Flutter",
-    "Firebase",
-    "Python"
-  ],
-  "missing_skills": [
-    "Docker",
-    "REST API",
-    "Git"
-  ],
-  "missing_keywords": [
-    "Machine Learning",
-    "CI/CD"
-  ],
-  "formatting_suggestions": [
-    "Add Professional Summary",
-    "Improve Projects Section"
-  ],
-  "final_recommendation":
-  "Good resume but needs Docker and REST API projects."
-}}
-
-Do not return markdown.
-Do not return explanations.
-Only JSON.
+Be clear and professional.
 """
 
-    return ask_ai_tutor(prompt, "English")
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/"
+        f"models/gemini-1.5-flash:generateContent?key={api_key}"
+    )
+
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": prompt}
+                ]
+            }
+        ]
+    }
+
+    response = requests.post(url, json=payload)
+
+    if response.status_code != 200:
+        return {
+            "answer": f"Gemini error: {response.text}"
+        }
+
+    data = response.json()
+
+    answer = data["candidates"][0]["content"]["parts"][0]["text"]
+
+    return {
+        "answer": answer
+    }
 
 @app.post("/interview/evaluate")
 def evaluate_interview(request: InterviewRequest):
