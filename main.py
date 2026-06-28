@@ -325,6 +325,12 @@ def set_username(request: UserProfileRequest):
         request.email,
     )
 
+@app.post("/update-username")
+def update_username_api(request: UpdateUsernameRequest):
+        return update_username(
+          request.user_id,
+          request.username,
+    )
 
 @app.get("/user-profile/{user_id}")
 def user_profile(user_id: str):
@@ -341,9 +347,4 @@ def user_profile(user_id: str):
         "profile": profile,
     }
     
-    @app.post("/update-username")
-    def update_username_api(request: UpdateUsernameRequest):
-        return update_username(
-        request.user_id,
-        request.username,
-    )
+    
