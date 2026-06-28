@@ -297,9 +297,21 @@ def get_community_posts():
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT * FROM community_posts
-        ORDER BY created_at DESC
+        SELECT 
+            p.*,
+            (
+                SELECT COUNT(*)
+                FROM community_replies r
+                WHERE r.post_id = p.id
+            ) as reply_count
+        FROM community_posts p
+        ORDER BY p.created_at DESC
     """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [dict(row) for row in rows]
 
     rows = cursor.fetchall()
     conn.close()

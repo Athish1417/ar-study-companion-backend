@@ -127,6 +127,11 @@ class UserProfileRequest(BaseModel):
 class UpdateUsernameRequest(BaseModel):
     user_id: str
     username: str
+    
+class InterviewRequest(BaseModel):
+    role: str
+    question_number: int
+    answer: str=""
 
 
 @app.get("/")
@@ -205,6 +210,62 @@ def ask_ai_image(request: AIImageRequest):
         request.mime_type,
     )
     
+@app.post("/interview/start")
+def start_interview(request: InterviewRequest):
+
+    prompt = f"""
+You are a senior interviewer.
+
+Candidate Role:
+{request.role}
+
+Ask ONLY Question {request.question_number}.
+
+Rules:
+- One interview question only.
+- Mix HR + Technical.
+- Professional interview style.
+- Do not explain.
+"""
+
+    return ask_ai_tutor(prompt, "English")
+
+@app.post("/interview/evaluate")
+def evaluate_interview(request: InterviewRequest):
+
+    prompt = f"""
+You are an expert interview evaluator.
+
+Role:
+{request.role}
+
+Question Number:
+{request.question_number}
+
+Candidate Answer:
+{request.answer}
+
+Evaluate professionally.
+
+Return:
+
+Technical Score: /10
+Communication Score: /10
+Confidence Score: /10
+
+Strengths
+
+Weaknesses
+
+Correct Sample Answer
+
+Tips for Improvement
+
+Overall Feedback
+"""
+
+    return ask_ai_tutor(prompt, "English")
+
 @app.post("/generate-flashcards")
 def generate_flashcards_api(request: FlashcardRequest):
     return generate_flashcards(
