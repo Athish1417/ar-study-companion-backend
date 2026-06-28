@@ -24,7 +24,7 @@ from database.db import (
     get_flashcard_history,
     get_flashcards_by_id,
     
-get_ats_history,
+
 save_interview_history,
 get_interview_history,
 
@@ -505,11 +505,7 @@ def user_profile(user_id: str):
     }
     
     
-@app.get("/ats/history/{user_id}")
-def ats_history(user_id: str):
-    return {
-        "history": get_ats_history(user_id)
-    }
+
 
 
 @app.get("/interview/history/{user_id}")
