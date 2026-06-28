@@ -216,23 +216,37 @@ def ask_ai_image(request: AIImageRequest):
     
 @app.post("/interview/start")
 def start_interview(request: InterviewRequest):
+    api_key = os.getenv("GEMINI_API_KEY")
 
     prompt = f"""
-You are a senior interviewer.
+You are a professional HR and technical interviewer.
 
-Candidate Role:
-{request.role}
+Role: {request.role}
+Question Number: {request.question_number}
 
-Ask ONLY Question {request.question_number}.
-
-Rules:
-- One interview question only.
-- Mix HR + Technical.
-- Professional interview style.
-- Do not explain.
+Ask only ONE realistic interview question.
+Do not explain.
+Do not mention study-related restrictions.
 """
 
-    return ask_ai_tutor(prompt, "English")
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/"
+        f"models/gemini-2.0-flash:generateContent?key={api_key}"
+    )
+
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}]
+    }
+
+    response = requests.post(url, json=payload)
+
+    if response.status_code != 200:
+        return {"answer": f"Gemini error: {response.text}"}
+
+    data = response.json()
+    answer = data["candidates"][0]["content"]["parts"][0]["text"]
+
+    return {"answer": answer}
 
 @app.post("/ats/analyze")
 def analyze_resume(request: ResumeATSRequest):
@@ -293,39 +307,50 @@ Be clear and professional.
 
 @app.post("/interview/evaluate")
 def evaluate_interview(request: InterviewRequest):
+    api_key = os.getenv("GEMINI_API_KEY")
 
     prompt = f"""
-You are an expert interview evaluator.
+You are a real interview evaluator.
 
-Role:
-{request.role}
+Role: {request.role}
+Question Number: {request.question_number}
+Candidate Answer: {request.answer}
 
-Question Number:
-{request.question_number}
+Evaluate like a real interview.
 
-Candidate Answer:
-{request.answer}
-
-Evaluate professionally.
-
-Return:
-
+Give:
 Technical Score: /10
 Communication Score: /10
 Confidence Score: /10
+Clarity Score: /10
 
-Strengths
+Strengths:
+Weaknesses:
+Better Sample Answer:
+Tips to Improve:
+Overall Feedback:
 
-Weaknesses
-
-Correct Sample Answer
-
-Tips for Improvement
-
-Overall Feedback
+Do not mention study restrictions.
 """
 
-    return ask_ai_tutor(prompt, "English")
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/"
+        f"models/gemini-2.0-flash:generateContent?key={api_key}"
+    )
+
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}]
+    }
+
+    response = requests.post(url, json=payload)
+
+    if response.status_code != 200:
+        return {"answer": f"Gemini error: {response.text}"}
+
+    data = response.json()
+    answer = data["candidates"][0]["content"]["parts"][0]["text"]
+
+    return {"answer": answer}
 
 @app.post("/generate-flashcards")
 def generate_flashcards_api(request: FlashcardRequest):
