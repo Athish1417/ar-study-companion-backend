@@ -231,7 +231,7 @@ Do not mention study-related restrictions.
 
     url = (
         "https://generativelanguage.googleapis.com/v1beta/"
-        f"models/gemini-2.0-flash:generateContent?key={api_key}"
+        f"models/gemini-2.5-flash:generateContent?key={api_key}"
     )
 
     payload = {
@@ -335,7 +335,7 @@ Do not mention study restrictions.
 
     url = (
         "https://generativelanguage.googleapis.com/v1beta/"
-        f"models/gemini-2.0-flash:generateContent?key={api_key}"
+        f"models/gemini-2.5-flash:generateContent?key={api_key}"
     )
 
     payload = {
