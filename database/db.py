@@ -503,31 +503,6 @@ def update_username(user_id, username):
         conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-        INSERT INTO ats_history
-        (user_id, resume_name, job_role, result)
-        VALUES (?, ?, ?, ?)
-    """, (user_id, resume_name, job_role, result))
-
-    conn.commit()
-    conn.close()
-
-def get_ats_history(user_id):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT *
-        FROM ats_history
-        WHERE user_id = ?
-        ORDER BY created_at DESC
-    """, (user_id,))
-
-    rows = cursor.fetchall()
-    conn.close()
-
-    return [dict(row) for row in rows]
-
 
 def save_interview_history(user_id, role, feedback):
     conn = get_connection()

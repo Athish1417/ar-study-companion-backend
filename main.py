@@ -23,7 +23,7 @@ from database.db import (
     save_flashcards,
     get_flashcard_history,
     get_flashcards_by_id,
-    save_ats_history,
+    
 get_ats_history,
 save_interview_history,
 get_interview_history,
@@ -249,12 +249,6 @@ Do not mention study-related restrictions.
 
     data = response.json()
     answer = data["candidates"][0]["content"]["parts"][0]["text"]
-    save_ats_history(
-    "demo_user",
-    "Resume.pdf",
-    request.job_role,
-    answer,
-)
 
 
     return {"answer": answer}
