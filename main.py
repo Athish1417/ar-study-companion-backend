@@ -504,17 +504,6 @@ def user_profile(user_id: str):
         "profile": profile,
     }
     
-@app.get("/debug-key")
-def debug_key():
-    key = os.getenv("GEMINI_API_KEY", "")
-    return {
-        "has_key": bool(key),
-        "starts_with": key[:8],
-        "ends_with": key[-6:],
-        "length": len(key),
-    }
-
-
 
 @app.get("/interview/history/{user_id}")
 def interview_history(user_id: str):
