@@ -19,7 +19,7 @@ def ask_gemini_for_topic(ocr_text: str):
 
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
-         f"gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+         f"gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
     )
 
     prompt = f"""
