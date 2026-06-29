@@ -87,7 +87,7 @@ def ask_ai_tutor(question: str, language: str):
 
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+        f"gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
     )
 
     prompt = _study_prompt(language, question)
@@ -128,7 +128,7 @@ def ask_ai_tutor_with_image(
 
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+        f"gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
     )
 
     if not question.strip():
