@@ -92,7 +92,7 @@ def generate_quiz_with_gemini(topic: str, summary: str):
 
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"gemini-2.5-pro:generateContent?key={GEMINI_API_KEY}"
+        f"gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
     )
 
     prompt = f"""
