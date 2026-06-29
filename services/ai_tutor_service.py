@@ -50,7 +50,7 @@ def _handle_gemini_response(data):
             or "quota" in error_message.lower()
         ):
             return {
-                "answer": "AI Tutor is busy right now due to high demand. Please try again in a few seconds.",
+               "answer": f"Gemini real error: {error_message}",
                 "source": "gemini-busy",
             }
 

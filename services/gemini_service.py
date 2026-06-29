@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+print("Loaded Key:", GEMINI_API_KEY[:20])
 
 def ask_gemini_for_topic(ocr_text: str):
     if not GEMINI_API_KEY:
